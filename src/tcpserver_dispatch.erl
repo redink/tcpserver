@@ -23,7 +23,8 @@ recv(SoFar, CallbackMod, Socket_Param,
 	    case dispatch(Commands, CallbackMod, CallbackMod, Client) of
 		{ok, NextCallbackMod, NewClient} ->
 		    ?MODULE:recv(Rest, NextCallbackMod, Socket_Param, NewClient);
-		closed -> closed
+		closed -> 
+		    closed
 	    end;
 	{Closed, _} ->
 	    ?LOG("Client close the connection"),
@@ -37,9 +38,36 @@ recv(SoFar, CallbackMod, Socket_Param,
 		closed ->
 		    ?LOG("Server close the connection"),
 		    closed;
-		{ok,NewMod,NewClient} -> ?MODULE:recv(SoFar, NewMod, Socket_Param, NewClient);
-		{ok,NewClient} -> ?MODULE:recv(SoFar, CallbackMod, Socket_Param, NewClient);
-		_Any -> ?MODULE:recv(SoFar, CallbackMod, Socket_Param, Client)
+		{ok,NewMod,NewClient} -> 
+		    ?MODULE:recv(SoFar, NewMod, Socket_Param, NewClient);
+		{ok,NewClient} -> 
+		    ?MODULE:recv(SoFar, CallbackMod, Socket_Param, NewClient);
+		_Any -> 
+		    ?MODULE:recv(SoFar, CallbackMod, Socket_Param, Client)
+	    end;
+	Tuple when element(1, Tuple) =:= <<"cast">> ->
+	    case CallbackMod:cast(Tuple, Client) of
+		closed ->
+		    ?LOG("Server close the connection"),
+		    closed;
+		{ok, NewMod, NewClient} ->
+		    ?MODULE:recv(SoFar, NewMod, Socket_Param, NewClient);
+		{ok, NewClient} ->
+		    ?MODULE:recv(SoFar, CallbackMod, Socket_Param, NewClient);
+		_Any ->
+		    ?MODULE:recv(SoFar, CallbackMod, Socket_Param, Client)
+	    end;
+	Tuple when element(1, Tuple) =:= <<"raw">> ->
+	    case CallbackMod:raw(Tuple, Client) of
+		closed ->
+		    ?LOG("Server close the connection"),
+		    closed;
+		{ok, NewMod, NewClient} ->
+		    ?MODULE:recv(SoFar, NewMod, Socket_Param, NewClient);
+		{ok, NewClient} ->
+		    ?MODULE:recv(SoFar, CallbackMod, Socket_Param, NewClient);
+		_Any ->
+		    ?MODULE:recv(SoFar, CallbackMod, Socket_Param, Client)
 	    end;
 	_Any ->
 	    ?LOG(["Any", _Any])
@@ -47,8 +75,11 @@ recv(SoFar, CallbackMod, Socket_Param,
 
 dispatch([], _CallbackMod, NextMod, Client) ->
     {ok, NextMod, Client};
-dispatch([Data|Tail], CallbackMod, NextMod, Client = #client{parse_module = Parse_Moudle}) ->
-    Ret = case Parse_Moudle:parse(Data) of
+dispatch([Data|Tail], CallbackMod, NextMod, 
+	 Client = #client{parse_module = Parse_Moudle, 
+			  language = Language, 
+			  parse_proto = Parse_Proto}) ->
+    Ret = case Parse_Moudle:parse(Data, Parse_Proto) of
 	      {command, Command, Channel} ->
 		  case Channel of
 		      1 -> CallbackMod:cast(Command, Data, Client);
@@ -57,7 +88,7 @@ dispatch([Data|Tail], CallbackMod, NextMod, Client = #client{parse_module = Pars
 	      ignore ->
 		  ignore;
 	      Event ->
-		  CallbackMod:event(Event, Client)
+		  CallbackMod:event(Event, Language, Client)
 	  end,
     case Ret of
 	{ok, NewMod, NewClient} ->
