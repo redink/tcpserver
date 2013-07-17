@@ -21,7 +21,7 @@
 
 start(_StartType, _StartArgs) ->
     application:start(ranch),
-    game_sup:start_link().
+    tcpserver_sup:start_link().
 
 stop(_State) ->
     ok.
