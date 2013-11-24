@@ -17,14 +17,14 @@
 start_tcp(Ref, NbAcceptors, TransOpts, ProtoOpts)
                 when is_integer(NbAcceptors), NbAcceptors > 0 ->
         ranch:start_listener(Ref, NbAcceptors,
-                ranch_tcp, TransOpts, game_protocol, ProtoOpts).
+                ranch_tcp, TransOpts, tcpserver_protocol, ProtoOpts).
 
 %% @doc Start an HTTPS listener.
 -spec start_ssl(any(), non_neg_integer(), any(), any()) -> {ok, pid()}.
 start_ssl(Ref, NbAcceptors, TransOpts, ProtoOpts)
                 when is_integer(NbAcceptors), NbAcceptors > 0 ->
         ranch:start_listener(Ref, NbAcceptors,
-                ranch_ssl, TransOpts, game_protocol, ProtoOpts).
+                ranch_ssl, TransOpts, tcpserver_protocol, ProtoOpts).
 
 
 %% @doc Stop a listener.
