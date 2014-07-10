@@ -20,6 +20,8 @@
 %% ===================================================================
 
 start(_StartType, _StartArgs) ->
+    lager:start(),
+    application:start(sync),
     application:start(ranch),
     tcpserver_sup:start_link().
 

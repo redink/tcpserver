@@ -9,11 +9,12 @@
 -module(tcpserver_proto_parse).
 
 -compile(export_all).
--include("proto.hrl").
--include("logger.hrl").
 
 parse(<< Size:32/big,Checksum:8,Command:16/big, Data/bits >>) ->
     parse(Size, Command, Checksum, Data).
+
+parse(_Size, 1, _, Data) ->
+    {<<"login">>, Data};
 
 parse(_Size,_Command,_Checksum,_Data)->
     ignore.

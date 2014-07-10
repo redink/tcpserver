@@ -8,9 +8,7 @@
 %%%-------------------------------------------------------------------
 -module(tcpserver_proto_builder).
 
--include("proto.hrl").
 -include("records.hrl").
--include("logger.hrl").
 -export([build_packet/1]).
 
 
